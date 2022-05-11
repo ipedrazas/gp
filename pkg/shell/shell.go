@@ -1,5 +1,4 @@
-The MIT License (MIT)
-
+/*
 Copyright © 2022 Ivan Pedrazas <ipedrazas@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,3 +18,31 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+*/
+package shell
+
+import (
+	"os"
+	"os/exec"
+)
+
+func Execute(script string, command []string) (bool, error) {
+
+	cmd := &exec.Cmd{
+		Path:   script,
+		Args:   command,
+		Stderr: os.Stderr,
+	}
+
+	err := cmd.Start()
+	if err != nil {
+		return false, err
+	}
+
+	err = cmd.Wait()
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
