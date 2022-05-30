@@ -22,6 +22,8 @@ THE SOFTWARE.
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/ipedrazas/gp/pkg/models"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -50,8 +52,16 @@ var buildCmd = &cobra.Command{
 			gitSha = "no-git-repo"
 
 		}
+		fmt.Println("building for targets:")
 		for _, target := range c.Targets {
-			target.Run(c, gitSha)
+			fmt.Println("\t- ", target.Name)
+		}
+
+		for _, target := range c.Targets {
+			err = target.Run(c, gitSha)
+			if err != nil {
+				cobra.CheckErr(err)
+			}
 		}
 	},
 }

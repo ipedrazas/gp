@@ -5,27 +5,6 @@ import (
 	"time"
 )
 
-func GenetateHelmChart(volWorkspace, dockerImage, name, starterName, starterVolume string) []string {
-
-	// Helm creates the dir structure if it doesn't exists
-	command := []string{
-		"docker",
-		"run",
-		"--rm",
-		"-v",
-		volWorkspace,
-		"-v",
-		"/Users/ivan/.kube:/root/.kube",
-		"-v",
-		starterVolume,
-		dockerImage,
-		"sh",
-		"-c",
-		"helm create " + name + " --starter " + starterName,
-	}
-	return command
-}
-
 func Buildx(platform, tag, shaGit, version string, push bool) []string {
 
 	command := []string{
@@ -56,25 +35,15 @@ func Buildx(platform, tag, shaGit, version string, push bool) []string {
 	return command
 }
 
-func HelmValues(volumes []string, dockerImage string) []string {
-
-	// Helm creates the dir structure if it doesn't exists
-	command := []string{
+func ComposeTarget(composeFile, service string) []string {
+	actionCMD := []string{
 		"docker",
+		"compose",
+		"-f",
+		composeFile,
 		"run",
-		"--rm",
+		"-T",
+		service,
 	}
-	for _, vol := range volumes {
-		command = append(command, "-v")
-		command = append(command, vol)
-	}
-
-	command = append(command, dockerImage)
-	return command
+	return actionCMD
 }
-
-// docker run -it
-// -v $(pwd):/workspace
-// -v /Users/ivan/.config/gp/targets/local/target.yaml:/targets/target.yaml
-// -v /Users/ivan/.config/gp/config.yaml:/gp/config.yaml
-// -v /tmp/catalog.json:/data/catalog.json ipedrazas/python

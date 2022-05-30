@@ -111,3 +111,59 @@ func TestTarget_IsAvailable(t *testing.T) {
 		})
 	}
 }
+
+func Test_validateActions(t *testing.T) {
+	type args struct {
+		actions  []string
+		services []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{name: "t01",
+			args: args{
+				actions:  []string{"build", "hydrate"},
+				services: []string{"build", "hydrate"},
+			},
+			want: true},
+		{name: "t02",
+			args: args{
+				actions:  []string{"hydrate"},
+				services: []string{"build", "hydrate"},
+			},
+			want: true},
+		{name: "t03",
+			args: args{
+				actions:  []string{"hydrate"},
+				services: []string{"build"},
+			},
+			want: false},
+		{name: "t04",
+			args: args{
+				actions:  []string{},
+				services: []string{"build"},
+			},
+			want: true},
+		{name: "t05",
+			args: args{
+				actions:  []string{"build", "hydrate"},
+				services: []string{},
+			},
+			want: false},
+		{name: "t06",
+			args: args{
+				actions:  []string{"hydrate", "build"},
+				services: []string{"build", "hydrate"},
+			},
+			want: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := validateActions(tt.args.actions, tt.args.services); got != tt.want {
+				t.Errorf("validateActions() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

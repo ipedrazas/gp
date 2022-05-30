@@ -44,28 +44,10 @@ func TestBuildx(t *testing.T) {
 	}
 }
 
-func TestGenetateHelmChart(t *testing.T) {
-	res := []string{
-		"docker",
-		"run",
-		"--rm",
-		"-v",
-		"volWorkspace:/workspace",
-		"-v",
-		"/Users/ivan/.kube:/root/.kube",
-		"-v",
-		"starter:/starter",
-		"dockerImage",
-		"sh",
-		"-c",
-		"helm create name --starter starter",
-	}
+func TestComposeTarget(t *testing.T) {
 	type args struct {
-		volWorkspace  string
-		dockerImage   string
-		name          string
-		starterName   string
-		starterVolume string
+		composeFile string
+		service     string
 	}
 	tests := []struct {
 		name string
@@ -73,55 +55,14 @@ func TestGenetateHelmChart(t *testing.T) {
 		want []string
 	}{
 		{name: "t01", args: args{
-			volWorkspace:  "volWorkspace:/workspace",
-			dockerImage:   "dockerImage",
-			name:          "name",
-			starterName:   "starter",
-			starterVolume: "starter:/starter",
-		}, want: res},
+			composeFile: "docker-compose.yaml",
+			service:     "DoIt",
+		}, want: []string{"docker", "compose", "-f", "docker-compose.yaml", "run", "-T", "DoIt"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GenetateHelmChart(tt.args.volWorkspace, tt.args.dockerImage, tt.args.name, tt.args.starterName, tt.args.starterVolume); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GenetateHelmChart() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestHelmValues(t *testing.T) {
-	res := []string{
-		"docker",
-		"run",
-		"--rm",
-		"-v",
-		"/data:/data",
-		"image",
-	}
-
-	type args struct {
-		volumes     []string
-		dockerImage string
-	}
-	tests := []struct {
-		name string
-		args args
-		want []string
-	}{
-		{name: "t01",
-			args: args{
-				volumes: []string{
-					"/data:/data",
-				},
-				dockerImage: "image",
-			},
-			want: res,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := HelmValues(tt.args.volumes, tt.args.dockerImage); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("HelmValues() = %v, want %v", got, tt.want)
+			if got := ComposeTarget(tt.args.composeFile, tt.args.service); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ComposeTarget() = %v, want %v", got, tt.want)
 			}
 		})
 	}

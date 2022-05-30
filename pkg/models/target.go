@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/ipedrazas/gp/pkg/files"
 	"github.com/ipedrazas/gp/pkg/path"
 	"github.com/ipedrazas/gp/pkg/shell"
+
 	"github.com/spf13/viper"
 )
 
@@ -15,18 +17,17 @@ type Target struct {
 	Name           string
 	Type           string
 	Platform       string
-	Cmd            string      `yaml:",omitempty"`
-	DNS            string      `yaml:"dns,omitempty"`
-	AllowLatest    bool        `yaml:"allow_latest,omitempty"`
-	Overwrite      bool        `yaml:",omitempty"`
-	Registry       string      `yaml:",omitempty"`
-	RegistryUserId string      `yaml:"registry_user,omitempty"`
-	OutDir         string      `yaml:",omitempty"`
-	ToolsImage     string      `yaml:"tools_image,omitempty"`
-	ValuesImage    string      `yaml:"values_image,omitempty"`
-	Image          string      `yaml:",omitempty"`
-	Starter        string      `yaml:",omitempty"`
-	Params         interface{} `yaml:",omitempty"`
+	Cmd            string   `yaml:",omitempty"`
+	DNS            string   `yaml:"dns,omitempty"`
+	AllowLatest    bool     `yaml:"allow_latest,omitempty"`
+	Overwrite      bool     `yaml:",omitempty"`
+	Registry       string   `yaml:",omitempty"`
+	RegistryUserId string   `yaml:"registry_user,omitempty"`
+	OutDir         string   `yaml:"out_dir,omitempty"`
+	Image          string   `yaml:",omitempty"`
+	Compose        string   `yaml:"compose,omitempty"`
+	Actions        []string `yaml:"actions,omitempty"`
+	DockerBuild    bool     `yaml:"docker_build,omitempty"`
 }
 
 func (target *Target) SetDockerImage(appName string, tag string) {
@@ -54,52 +55,23 @@ func (t *Target) IsAvailable() bool {
 
 func (t *Target) Run(comp *Component, gitSha string) error {
 	fmt.Println("Processing target ", t.Name)
-	v := viper.GetViper()
-	dockerBin := v.GetString("docker.bin")
-	t.SetDockerImage(comp.Slug, comp.Version+"-"+getArch(t.Platform))
 
-	dockerBuildCMD := cmd.Buildx(t.Platform, t.Image, gitSha, comp.Version, true)
-	fmt.Println(dockerBuildCMD)
-	_, err := shell.Execute(dockerBin, dockerBuildCMD)
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
+	if t.DockerBuild {
+		v := viper.GetViper()
+		dockerBin := v.GetString("docker.bin")
+		t.SetDockerImage(comp.Slug, comp.Version+"-"+getArch(t.Platform))
 
-	// }
-	if t.Type == "helm" {
-		fmt.Println("Create chart")
-		vol := path.CurrentDir() + ":/workspace"
-		starterVol := path.HelmDefaultsStarters() + ":/root/.local/share/helm/starters"
-		chartLoc := "/workspace/gp/helm/" + comp.Slug
-		helmCmd := cmd.GenetateHelmChart(vol, t.ToolsImage, chartLoc, t.Starter, starterVol)
-		fmt.Println(helmCmd)
-		_, err := shell.Execute(dockerBin, helmCmd)
+		dockerBuildCMD := cmd.Buildx(t.Platform, t.Image, gitSha, comp.Version, true)
+		fmt.Println(dockerBuildCMD)
+		_, err := shell.Execute(dockerBin, dockerBuildCMD)
 		if err != nil {
 			fmt.Println(err)
+			return err
 		}
+	}
 
-		// volWorkspace, targetVol, configVol, dataVol string, dockerImage string
-		targetVol := path.Targets() + t.Name + "/target.yaml:/targets/target.yaml"
-		configVol := path.AppConfig() + "config.yaml:/gp/config.yaml"
-		dataVol := path.AppRoot() + "/data:/data"
-		volumes := []string{
-			vol, targetVol, configVol, dataVol,
-		}
-		helmValuesCmd := cmd.HelmValues(volumes, t.ValuesImage)
-		fmt.Println(helmValuesCmd)
-		_, err = shell.Execute(dockerBin, helmValuesCmd)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
-	if t.Type == "oam" {
-		fmt.Println("generate manifests")
-	}
-	if t.Type == "go" {
-		fmt.Println("build go")
-	}
-	return nil
+	return t.ExecuteTargetCompose()
+
 }
 
 func getArch(platform string) string {
@@ -110,4 +82,56 @@ func getArch(platform string) string {
 		}
 	}
 	return ""
+}
+
+func (t *Target) GetCompose() *Compose {
+	c := &Compose{}
+	composePath := path.Targets() + t.Name + "/" + t.Compose
+	files.Load(composePath, c)
+	return c
+}
+
+func (t *Target) ExecuteTargetCompose() error {
+	v := viper.GetViper()
+	dockerBin := v.GetString("docker.bin")
+	c := t.GetCompose()
+	services := c.GetServiceNames()
+	if len(t.Actions) == 0 {
+		t.Actions = services
+	}
+	if validateActions(t.Actions, services) {
+		for _, action := range t.Actions {
+			compose := path.Targets() + t.Name + "/" + t.Compose
+			if !path.Exists(compose) {
+				return errors.New("compose file not found in target directory " + compose)
+			}
+			actionCMD := cmd.ComposeTarget(compose, action)
+			fmt.Println(actionCMD)
+			_, err := shell.Execute(dockerBin, actionCMD)
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+	} else {
+		return errors.New("target actions and compose services mismatch")
+	}
+	return nil
+}
+
+func validateActions(actions, services []string) bool {
+	for _, action := range actions {
+		if !contains(action, services) {
+			return false
+		}
+	}
+	return true
+}
+
+func contains(elem string, target []string) bool {
+	for _, t := range target {
+		if elem == t {
+			return true
+		}
+	}
+	return false
 }

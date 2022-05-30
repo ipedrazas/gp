@@ -143,22 +143,6 @@ func Test_getCurrentDir(t *testing.T) {
 	}
 }
 
-func TestHelmDefaultsStarters(t *testing.T) {
-	tests := []struct {
-		name string
-		want string
-	}{
-		{name: "t01", want: home + "/.config/gp/defaults/k8s/helm/starters/"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := HelmDefaultsStarters(); got != tt.want {
-				t.Errorf("HelmDefaultsStartersPath() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestHelmChart(t *testing.T) {
 	tests := []struct {
 		name string
@@ -176,7 +160,7 @@ func TestHelmChart(t *testing.T) {
 }
 
 func TestGetDirNames(t *testing.T) {
-	dirs := []string{"cmd", "files", "models", "path", "shell"}
+	dirs := []string{"cmd", "files", "models", "path", "shell", "targets"}
 	dirs2 := []string{".git", "cmd", "pkg"}
 	type args struct {
 		dir string

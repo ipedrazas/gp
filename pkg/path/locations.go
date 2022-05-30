@@ -80,10 +80,6 @@ func CurrentDir() string {
 	return path
 }
 
-func HelmDefaultsStarters() string {
-	return DefaultsK8S() + "helm/starters/"
-}
-
 func HelmChart() string {
 	return AppRoot() + "k8s/helm/"
 }
@@ -94,7 +90,7 @@ func Kubeconfig() string {
 
 // Targets returns  "$HOME/.config/gp/targets/"
 func Targets() string {
-	if Exists(AppRoot() + "/targets/") {
+	if Exists(AppRoot() + "targets/") {
 		return AppRoot() + "targets/"
 	}
 	return AppConfig() + "targets/"

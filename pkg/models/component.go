@@ -43,6 +43,13 @@ func (c *Component) GenerateDockerfile() error {
 				return err
 			}
 		}
+		if strings.ToLower(c.Lang) == "static" {
+			tpl := path.Dockerfiles() + "static/nginx.Dockerfile"
+			err := c.writeDockerfile(tpl)
+			if err != nil {
+				return err
+			}
+		}
 
 		err := files.Copy(path.Dockerfiles()+"dockerignore", path.CurrentDir()+"/.dockerignore")
 		if err != nil {
