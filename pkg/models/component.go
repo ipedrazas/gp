@@ -126,10 +126,7 @@ func (c *Component) Hydrate(v *viper.Viper) error {
 		if t.RegistryUserId == "" {
 			t.RegistryUserId = v.GetString("docker.user")
 		}
-		if t.Image == "" {
-			t.SetDockerImage(c.Slug, c.Version+"-"+getArch(t.Platform))
 
-		}
 		c.Targets = append(c.Targets, *t)
 	}
 	if c.Cmd == "" {

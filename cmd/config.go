@@ -69,8 +69,7 @@ var configCmd = &cobra.Command{
 		// we add the local target
 		t := &models.Target{
 			Name:     "local",
-			Type:     "docker",
-			Platform: "linux/" + runtime.GOARCH,
+			Platform: []string{"linux/" + runtime.GOARCH},
 		}
 		if t.IsAvailable() {
 			t.Save()
