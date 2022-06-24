@@ -63,17 +63,18 @@ func (t *Target) Run(comp *Component, gitSha string) error {
 	if t.DockerBuild {
 		v := viper.GetViper()
 		dockerBin := v.GetString("docker.bin")
-		for _, plat := range t.Platform {
-			t.SetDockerImage(comp.Slug, comp.Version+"-"+getArch(plat))
+		plat := strings.Join(t.Platform, ",")
+		// for _, plat := range t.Platform {
+		t.SetDockerImage(comp.Slug, comp.Version)
 
-			dockerBuildCMD := cmd.Buildx(plat, t.Image, gitSha, comp.Version, true)
-			fmt.Println(dockerBuildCMD)
-			_, err := shell.Execute(dockerBin, dockerBuildCMD)
-			if err != nil {
-				fmt.Println(err)
-				return err
-			}
+		dockerBuildCMD := cmd.Buildx(plat, t.Image, gitSha, comp.Version, true)
+		fmt.Println(dockerBuildCMD)
+		_, err := shell.Execute(dockerBin, dockerBuildCMD)
+		if err != nil {
+			fmt.Println(err)
+			return err
 		}
+		// }
 
 	}
 

@@ -161,7 +161,7 @@ func TestHelmChart(t *testing.T) {
 
 func TestGetDirNames(t *testing.T) {
 	dirs := []string{"cmd", "files", "models", "path", "shell", "targets"}
-	dirs2 := []string{".git", "cmd", "pkg"}
+	dirs2 := []string{".git", "cmd", "dist", "gp", "pkg"}
 	type args struct {
 		dir string
 	}

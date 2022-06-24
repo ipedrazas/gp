@@ -14,5 +14,10 @@ test:
 
 .PHONY: build
 build: 
-	go build -ldflags "-X github.com/ipedrazas/gp/cmd.Version=`git describe --match 'v[0-9]*' --dirty='.m' --always --tags` -X github.com/ipedrazas/gp/cmd.Sha1=`git rev-parse HEAD`" -o g
+	go build -ldflags "-X github.com/ipedrazas/gp/cmd.Version=`git describe --match 'v[0-9]*' --dirty='.m' --always --tags` -X github.com/ipedrazas/gp/cmd.Sha1=`git rev-parse HEAD`" -o ./dist/g
+
+.PHONY: install
+install:
+	rm ~/go/bin/g
+	cp ./dist/g ~/go/bin/g
 

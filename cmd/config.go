@@ -47,7 +47,7 @@ var configCmd = &cobra.Command{
 	Use:     "config",
 	Short:   "Config gp with sane Deafults",
 	Long:    `Config gp. Creates folder structure, config file and pulls the defaults repo definition`,
-	Example: `  gp configure --user myuser --registry docker.io --defaults https://gitea.alacasa.uk/ivan/defaults.git] `,
+	Example: `  gp configure --user myuser --registry docker.io ] `,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		v := viper.GetViper()

@@ -108,6 +108,7 @@ func (c *Component) Hydrate(v *viper.Viper) error {
 	files.Load(path.AppFile(), c)
 	err := path.MakeDirectoryIfNotExists(path.AppRoot())
 	if err != nil {
+		fmt.Println("failed loading the app file")
 		return err
 	}
 

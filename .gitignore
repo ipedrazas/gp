@@ -15,3 +15,4 @@
 # vendor/
 gp
 cover.*
+dist/
