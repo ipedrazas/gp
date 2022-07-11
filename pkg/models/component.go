@@ -15,6 +15,7 @@ type Component struct {
 	Slug      string   `yaml:",omitempty"`
 	Port      int      `yaml:",omitempty"`
 	Version   string   `yaml:",omitempty"`
+	Workspace string   `yaml:",omitempty"`
 	Src       string   `yaml:",omitempty"`
 	Lang      string   `yaml:",omitempty"`
 	Cmd       string   `yaml:",omitempty"`

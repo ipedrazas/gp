@@ -10,7 +10,7 @@ func TestBuildx(t *testing.T) {
 
 	bdate := time.Now().Format("2006-01-02 15:04:05")
 	res := []string{
-		"docker", "buildx", "build", "--platform", "linux/amd64",
+		"docker", "buildx", "build", "--platform", "linux/amd64,linux/arm64",
 		"--tag", "unittest", "--build-arg", "GIT_SHA=111",
 		"--build-arg", "VERSION=1.1.1", "--build-arg",
 		"BUILD_DATE=" + bdate, "--push", ".",
@@ -28,7 +28,7 @@ func TestBuildx(t *testing.T) {
 		want []string
 	}{
 		{name: "t01", args: args{
-			platform: "linux/amd64",
+			platform: "linux/amd64,linux/arm64",
 			tag:      "unittest",
 			shaGit:   "111",
 			version:  "1.1.1",

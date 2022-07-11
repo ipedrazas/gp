@@ -65,9 +65,9 @@ func DefaultsK8S() string {
 	return Defaults() + "k8s/"
 }
 
-// AppFile returns "$PWD/.app.yaml"
+// AppFile returns "$PWD/.meta.yaml"
 func AppFile() string {
-	return CurrentDir() + "/.app.yaml"
+	return CurrentDir() + "/.meta.yaml"
 }
 
 // CurrentDir returns the current directory, no

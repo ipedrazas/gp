@@ -23,8 +23,6 @@ package cmd
 
 import (
 	"fmt"
-	"runtime"
-	"strings"
 
 	"github.com/ipedrazas/gp/pkg/models"
 	"github.com/ipedrazas/gp/pkg/path"
@@ -41,7 +39,7 @@ var (
 // addCmd represents the add command
 var addCmd = &cobra.Command{
 	Use:   "add",
-	Short: "A brief description of your command",
+	Short: "Adds a new Target defined in your catalog",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 
@@ -61,20 +59,14 @@ to quickly create a Cobra application.`,
 
 func init() {
 	targetCmd.AddCommand(addCmd)
-
 	addCmd.Flags().StringVarP(&t.Name, "name", "n", "", "name of the target")
-	addCmd.Flags().StringVarP(&platform, "platform", "p", "linux/"+runtime.GOARCH, "platform of the target: linux/amd64, linux/arm64, windows/amd64")
-	addCmd.Flags().StringVarP(&t.Compose, "compose", "c", "target-compose.yaml", "docker compose file that executes the target")
-	addCmd.Flags().StringVarP(&t.Registry, "registry", "r", "docker.io", "docker registry to push images")
-	addCmd.Flags().StringVarP(&t.RegistryUserId, "user", "u", "", "docker registry username")
-	addCmd.Flags().StringVarP(&t.DNS, "dns", "d", "", "DNS to use in artifacts")
-	addCmd.Flags().StringVarP(&actions, "actions", "a", "", "comma separated docker compose services. Use this option to override the predefined order of the compose file")
-
-	addCmd.Flags().BoolVarP(&t.DockerBuild, "build", "b", true, "execute docker build for the defined target platforms")
 	addCmd.Flags().BoolVarP(&global, "global", "g", false, "create a global target, for all projects, or just add it to the current project")
-	t.Platform = append(t.Platform, platform)
 
-	if actions != "" {
-		t.Actions = strings.Split(actions, ",")
-	}
+	// Check if the target is in the catalog <-- what does it mean?
+
 }
+
+// slug
+// workspace
+// gp_config
+// data

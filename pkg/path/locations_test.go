@@ -116,7 +116,7 @@ func TestAppFile(t *testing.T) {
 		name string
 		want string
 	}{
-		{name: "t01", want: currentDir + "/.app.yaml"},
+		{name: "t01", want: currentDir + "/.meta.yaml"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
