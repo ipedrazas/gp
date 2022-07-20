@@ -29,7 +29,7 @@ type Target struct {
 	// A Compose file can have several services, in case order is important
 	// this parameter allows you to define the right order
 	Actions     []string `yaml:"actions,omitempty"`
-	DockerBuild bool     `yaml:"docker_build,omitempty"`
+	DockerBuild bool     `yaml:"docker_build"`
 }
 
 func (target *Target) SetDockerImage(appName string, tag string) {
@@ -55,6 +55,11 @@ func (t *Target) IsAvailable() bool {
 	dir := path.Targets() + t.Name
 	return !path.Exists(dir)
 
+}
+
+func (t *Target) InDefaults(fromDefault string) bool {
+	dir := path.DefaultTargets() + fromDefault
+	return path.Exists(dir)
 }
 
 func (t *Target) Run(comp *Component, gitSha string) error {

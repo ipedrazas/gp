@@ -36,7 +36,7 @@ func SaveAsYaml(path string, out interface{}) error {
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
-	err = ioutil.WriteFile(path, d, 0644)
+	err = ioutil.WriteFile(path, d, 0664)
 	if err != nil {
 		log.Fatal(err)
 	}

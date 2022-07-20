@@ -120,7 +120,8 @@ func (c *Component) Hydrate(v *viper.Viper) error {
 		fileName := path.Targets() + target + "/target.yaml"
 		err = files.Load(fileName, t)
 		if err != nil {
-			return err
+			fmt.Printf("Warn: target %s cannot be read\n\n", fileName)
+			continue
 		}
 		if t.Registry == "" {
 			t.Registry = v.GetString("docker.registry")

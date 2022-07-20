@@ -22,49 +22,121 @@ THE SOFTWARE.
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"io/ioutil"
+	"strings"
 
+	"github.com/ipedrazas/gp/pkg/files"
 	"github.com/ipedrazas/gp/pkg/models"
 	"github.com/ipedrazas/gp/pkg/path"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
-	t        models.Target
-	platform string
-	actions  string
-	global   bool
+	name        string
+	global      bool
+	params      string
+	data        string
+	fromDefault string
 )
 
 // addCmd represents the add command
 var addCmd = &cobra.Command{
 	Use:   "add",
 	Short: "Adds a new Target defined in your catalog",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Long: `Adds a new Target. Targets are defined in $USER/.config/gp/defaults/gp/targets
+	
+	gp target add -n [New Target Name] -f [Target Name defined in Defaults] 
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	If you need to add more KV, you can pass them as 
+	gp target add -n [New Target Name] -f [Target Name defined in Defaults] -p [KEY=Value1,KEY2=value2]
+	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("add called")
-		if !global {
-			path.MakeDirectoryIfNotExists(path.AppRoot() + "targets/")
+		dt := &models.Target{}
+		fileName := path.DefaultTargets() + fromDefault + "/target.yaml"
+		err := files.Load(fileName, dt)
+		if err != nil {
+			cobra.CheckErr(err)
 		}
-		if t.IsAvailable() {
-			t.Save()
+		dt.Name = name
+		fmt.Println(dt)
+		c := &models.Component{}
+		err = c.Hydrate(viper.GetViper())
+		if err != nil {
+			cobra.CheckErr(err)
+		}
+		if dt.InDefaults(fromDefault) {
+			if dt.IsAvailable() {
+				dt.Save()
+				writeCompose(dt, c)
+			} else {
+				cobra.CheckErr(errors.New("target already exists in " + path.Targets() + dt.Name))
+			}
+		} else {
+			cobra.CheckErr(errors.New("target not found in Defaults directory"))
 		}
 	},
 }
 
 func init() {
 	targetCmd.AddCommand(addCmd)
-	addCmd.Flags().StringVarP(&t.Name, "name", "n", "", "name of the target")
+	addCmd.Flags().StringVarP(&name, "name", "n", "", "name of the target")
+	addCmd.Flags().StringVarP(&fromDefault, "default", "f", "", "Target name defined in the Default repo")
 	addCmd.Flags().BoolVarP(&global, "global", "g", false, "create a global target, for all projects, or just add it to the current project")
-
-	// Check if the target is in the catalog <-- what does it mean?
+	addCmd.Flags().StringVarP(&params, "params", "p", "", "comma separated key value pairs, -p \"KEY1=Value,KEY2=Value\"")
+	addCmd.Flags().StringVarP(&data, "data", "d", "", "data directory. If the target needs to feed data from a directory, this is the path")
+	addCmd.Flags().StringVarP(&params, "params", "p", "", "comma separated key value pairs, -p \"KEY1=Value,KEY2=Value\"")
 
 }
+
+func writeCompose(t *models.Target, c *models.Component) error {
+
+	tpl := path.DefaultTargets() + fromDefault + "/" + t.Compose
+	dst := path.Targets() + t.Name + "/" + t.Compose
+	content, err := ioutil.ReadFile(tpl)
+	if err != nil {
+		fmt.Println(err, tpl)
+		return err
+	}
+
+	text := string(content)
+
+	text = strings.Replace(text, "__TARGET_NAME__", t.Name, -1)
+	text = strings.Replace(text, "__WORKSPACE__", path.CurrentDir(), -1)
+	text = strings.Replace(text, "__GP_ROOT_CONFIG__/", path.AppConfig(), -1)
+	text = strings.Replace(text, "__DATA__", data, -1)
+	text = strings.Replace(text, "__NAME__", c.Slug, -1)
+
+	err = ioutil.WriteFile(dst, []byte(text), 0644)
+	if err != nil {
+		fmt.Println(err, tpl, dst)
+		return err
+	}
+	return nil
+}
+
+type ComposeInput struct {
+	TargetName    string `cue:"targetName" json:"target_name,omitempty"`
+	Workspace     string `cue:"workspaceDir" json:"workspace,omitempty"`
+	ConfigDir     string `cue:"configDir" json:"config_dir,omitempty"`
+	DataDir       string `cue:"dataDir" json:"data_dir,omitempty"`
+	CompName      string `cue:"compName" json:"comp_name,omitempty"`
+	ComposeSource string
+	YamlOut       string
+}
+
+// func writeComposeFromCUE(input *ComposeInput) error {
+// 	ctx := cuecontext.New()
+
+// 	// read and compile value
+// 	d, _ := os.ReadFile(input.ComposeSource)
+// 	schema := ctx.CompileBytes(d)
+// 	cueData := ctx.Encode(input)
+
+// 	return nil
+// }
 
 // slug
 // workspace

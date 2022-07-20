@@ -24,14 +24,14 @@ package cmd
 import (
 	"fmt"
 	"runtime"
-	"time"
 
 	"github.com/spf13/cobra"
 )
 
 var (
-	Sha1    string
-	Version string
+	Version        = "dev"
+	CommitHash     = "n/a"
+	BuildTimestamp = "n/a"
 )
 
 // versionCmd represents the version command
@@ -49,23 +49,12 @@ to quickly create a Cobra application.`,
 		fmt.Println("\n\t\t Version: ", Version)
 		fmt.Println("\t\t GoVersion: ", runtime.Version())
 		fmt.Println("\t\t Architecture: ", runtime.GOARCH)
-		fmt.Println("\t\t GitCommit: ", Sha1)
-		fmt.Println("\t\t Created-at: ", time.Now().Format("2006-01-02 15:04:05"))
+		fmt.Println("\t\t GitCommit: ", CommitHash)
+		fmt.Println("\t\t Created-at: ", BuildTimestamp)
 		fmt.Println("")
-
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(versionCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// versionCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// versionCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

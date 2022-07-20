@@ -31,8 +31,8 @@ import (
 )
 
 var (
-	cfgFile    string
-	targetname string
+	cfgFile string
+	// targetname string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -67,7 +67,7 @@ func init() {
 	// will be global for your application.
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.gp.yaml)")
-	rootCmd.PersistentFlags().StringVar(&targetname, "target", "local", "specify the target")
+	// rootCmd.PersistentFlags().StringVar(&targetname, "target", "local", "specify the target")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.

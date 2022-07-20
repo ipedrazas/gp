@@ -107,6 +107,11 @@ func Exists(path string) bool {
 	}
 	return false
 }
+
+// DefaultTargets returns the location of the targets defined in the Defaults repo
+func DefaultTargets() string {
+	return Defaults() + "targets/"
+}
 func MakeDirectoryIfNotExists(path string) error {
 
 	if !Exists(path) {

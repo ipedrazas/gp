@@ -31,7 +31,13 @@ import (
 	"gopkg.in/src-d/go-git.v4"
 )
 
-var defaultsURL string
+var (
+	registryUser string
+	registry     string
+	dns          string
+	directory    string
+	defaultsURL  string
+)
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
@@ -82,4 +88,9 @@ func init() {
 	// is called directly, e.g.:
 	// initCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	initCmd.Flags().StringVar(&defaultsURL, "defaults", "https://github.com/ipedrazas/defaults.git", "Git repo for the Defaults.")
+	initCmd.Flags().StringVarP(&directory, "dir", "d", path.AppConfig(), "directory to store defaults")
+	initCmd.Flags().StringVarP(&registryUser, "user", "u", "", "User to access the registry")
+	initCmd.Flags().StringVarP(&registry, "registry", "r", "docker.io", "Flag to specify the Docker registry to use.")
+	initCmd.Flags().StringVar(&dns, "dns", ".home.local", "Default subdomain for dns and ingress.")
+
 }
