@@ -3,7 +3,9 @@ package models
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/ipedrazas/gp/pkg/cmd"
 	"github.com/ipedrazas/gp/pkg/files"
@@ -28,6 +30,7 @@ type Target struct {
 	// this parameter allows you to define the right order
 	Actions     []string `yaml:"actions,omitempty"`
 	DockerBuild bool     `yaml:"docker_build"`
+	Paused      bool     `yaml:"paused,omitempty"`
 }
 
 func (target *Target) SetDockerImage(appName string, tag string) {
@@ -63,6 +66,10 @@ func (t *Target) InDefaults(fromDefault string) bool {
 func (t *Target) Run(comp *Component, gitSha string) error {
 	fmt.Println("Processing target ", t.Name)
 
+	if t.Paused {
+		return nil
+	}
+
 	if t.DockerBuild {
 		// v := viper.GetViper()
 		dockerBin := path.GetBinPath("docker")
@@ -76,7 +83,7 @@ func (t *Target) Run(comp *Component, gitSha string) error {
 		} else {
 			dockerBuildCMD = cmd.Buildx(plat, t.Image, gitSha, comp.Version, true)
 		}
-
+		setEnvVars(comp.Version, gitSha)
 		fmt.Println(dockerBuildCMD)
 		_, err := shell.Execute(dockerBin, dockerBuildCMD)
 		if err != nil {
@@ -87,6 +94,13 @@ func (t *Target) Run(comp *Component, gitSha string) error {
 
 	return t.ExecuteTargetCompose()
 
+}
+
+func setEnvVars(version, gitSha string) {
+	now := time.Now().UTC().Format(time.UnixDate)
+	os.Setenv("TAG", version)
+	os.Setenv("GITHUB_REF", gitSha)
+	os.Setenv("BUILD_DATE", now)
 }
 
 func getArch(platform string) string {

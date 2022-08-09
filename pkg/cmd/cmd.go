@@ -6,7 +6,7 @@ import (
 )
 
 func BuildxWithBake() []string {
-	// docker buildx bake -f docker-bake.hcl image-all --push
+	// docker buildx bake -f docker-bake.hcl --push
 	command := []string{
 		"docker",
 		"buildx",
