@@ -102,7 +102,6 @@ func Dockerfiles() string {
 
 func Exists(path string) bool {
 	if _, err := os.Stat(path); !os.IsNotExist(err) {
-
 		return true
 	}
 	return false
@@ -144,4 +143,9 @@ func GetDirNames(dir string) []string {
 	}
 	return dirs
 
+}
+
+func HasBakeFile() bool {
+	_, err := os.Stat("./docker-bake.hcl")
+	return err == nil
 }

@@ -1,0 +1,4 @@
+name: cue
+testcases:
+- TestParseCUEFile
+- TestParseCUEFile

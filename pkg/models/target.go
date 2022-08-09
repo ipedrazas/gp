@@ -9,14 +9,12 @@ import (
 	"github.com/ipedrazas/gp/pkg/files"
 	"github.com/ipedrazas/gp/pkg/path"
 	"github.com/ipedrazas/gp/pkg/shell"
-
-	"github.com/spf13/viper"
 )
 
 type Target struct {
 	Name           string
 	Platform       []string
-	DNS            string `yaml:"dns,omitempty"`
+	Domain         string `yaml:"dns,omitempty"`
 	Overwrite      bool   `yaml:",omitempty"`
 	Registry       string `yaml:",omitempty"`
 	RegistryUserId string `yaml:"registry_user,omitempty"`
@@ -52,7 +50,7 @@ func (t *Target) Save() {
 }
 
 func (t *Target) IsAvailable() bool {
-	dir := path.Targets() + t.Name
+	dir := path.AppRoot() + "targets/" + t.Name
 	return !path.Exists(dir)
 
 }
@@ -66,21 +64,25 @@ func (t *Target) Run(comp *Component, gitSha string) error {
 	fmt.Println("Processing target ", t.Name)
 
 	if t.DockerBuild {
-		v := viper.GetViper()
-		dockerBin := v.GetString("docker.bin")
+		// v := viper.GetViper()
+		dockerBin := path.GetBinPath("docker")
 		plat := strings.Join(t.Platform, ",")
 		// for _, plat := range t.Platform {
 		t.SetDockerImage(comp.Slug, comp.Version)
 
-		dockerBuildCMD := cmd.Buildx(plat, t.Image, gitSha, comp.Version, true)
+		var dockerBuildCMD []string
+		if path.HasBakeFile() {
+			dockerBuildCMD = cmd.BuildxWithBake()
+		} else {
+			dockerBuildCMD = cmd.Buildx(plat, t.Image, gitSha, comp.Version, true)
+		}
+
 		fmt.Println(dockerBuildCMD)
 		_, err := shell.Execute(dockerBin, dockerBuildCMD)
 		if err != nil {
 			fmt.Println(err)
 			return err
 		}
-		// }
-
 	}
 
 	return t.ExecuteTargetCompose()
@@ -105,8 +107,7 @@ func (t *Target) GetCompose() *Compose {
 }
 
 func (t *Target) ExecuteTargetCompose() error {
-	v := viper.GetViper()
-	dockerBin := v.GetString("docker.bin")
+	dockerBin := path.GetBinPath("docker")
 	c := t.GetCompose()
 	services := c.GetServiceNames()
 	if len(t.Actions) == 0 {

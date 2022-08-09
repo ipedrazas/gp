@@ -24,7 +24,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/ipedrazas/gp/pkg/files"
@@ -61,14 +61,41 @@ var addCmd = &cobra.Command{
 			cobra.CheckErr(err)
 		}
 		dt.Name = name
-		fmt.Println(dt)
+		dt.Domain = domain
+		dt.Registry = registry
+		dt.RegistryUserId = registryUser
+
 		c := &models.Component{}
-		err = c.Hydrate(viper.GetViper())
+
+		v := viper.GetViper()
+		fmt.Println(domain)
+		fmt.Println(v.IsSet("domain"))
+		fmt.Println(v.GetString("domain"))
+		if domain == "" && v.IsSet("domain") {
+			dt.Domain = v.GetString("domain")
+		}
+		if registryUser == "" && v.IsSet("registry_user") {
+			dt.RegistryUserId = v.GetString("registry_user")
+		}
+		if registry == "" && v.IsSet("registry") {
+			dt.Registry = v.GetString("registry")
+		}
+
+		fmt.Println(dt)
+		fmt.Println(dt.IsAvailable())
+		fmt.Println(dt.InDefaults(fromDefault))
+
+		err = c.Hydrate(v)
 		if err != nil {
 			cobra.CheckErr(err)
 		}
+
 		if dt.InDefaults(fromDefault) {
 			if dt.IsAvailable() {
+				err := path.MakeDirectoryIfNotExists(path.AppRoot() + "targets/")
+				if err != nil {
+					cobra.CheckErr(err)
+				}
 				dt.Save()
 				writeCompose(dt, c)
 			} else {
@@ -82,12 +109,15 @@ var addCmd = &cobra.Command{
 
 func init() {
 	targetCmd.AddCommand(addCmd)
+
 	addCmd.Flags().StringVarP(&name, "name", "n", "", "name of the target")
 	addCmd.Flags().StringVarP(&fromDefault, "default", "f", "", "Target name defined in the Default repo")
 	addCmd.Flags().BoolVarP(&global, "global", "g", false, "create a global target, for all projects, or just add it to the current project")
 	addCmd.Flags().StringVarP(&params, "params", "p", "", "comma separated key value pairs, -p \"KEY1=Value,KEY2=Value\"")
-	addCmd.Flags().StringVarP(&data, "data", "d", "", "data directory. If the target needs to feed data from a directory, this is the path")
-	addCmd.Flags().StringVarP(&params, "params", "p", "", "comma separated key value pairs, -p \"KEY1=Value,KEY2=Value\"")
+	addCmd.Flags().StringVar(&data, "data", "", "data directory. If the target needs to feed data from a directory, this is the path")
+	addCmd.Flags().StringVarP(&domain, "domain", "d", "", "partial dns for public access to resources: .mycontext.mydomain.com ")
+	addCmd.Flags().StringVarP(&registryUser, "user", "u", "", "User to access the registry")
+	addCmd.Flags().StringVarP(&registry, "registry", "r", "", "Flag to specify the Docker registry to use.")
 
 }
 
@@ -95,7 +125,7 @@ func writeCompose(t *models.Target, c *models.Component) error {
 
 	tpl := path.DefaultTargets() + fromDefault + "/" + t.Compose
 	dst := path.Targets() + t.Name + "/" + t.Compose
-	content, err := ioutil.ReadFile(tpl)
+	content, err := os.ReadFile(tpl)
 	if err != nil {
 		fmt.Println(err, tpl)
 		return err
@@ -109,7 +139,7 @@ func writeCompose(t *models.Target, c *models.Component) error {
 	text = strings.Replace(text, "__DATA__", data, -1)
 	text = strings.Replace(text, "__NAME__", c.Slug, -1)
 
-	err = ioutil.WriteFile(dst, []byte(text), 0644)
+	err = os.WriteFile(dst, []byte(text), 0644)
 	if err != nil {
 		fmt.Println(err, tpl, dst)
 		return err

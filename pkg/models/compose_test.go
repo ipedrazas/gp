@@ -1,7 +1,6 @@
 package models
 
 import (
-	"reflect"
 	"testing"
 )
 
@@ -33,8 +32,11 @@ func TestCompose_GetServiceNames(t *testing.T) {
 			c := &Compose{
 				Services: tt.fields.Services,
 			}
-			if got := c.GetServiceNames(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Compose.GetServiceNames() = %v, want %v", got, tt.want)
+			got := c.GetServiceNames()
+			for _, entry := range got {
+				if !contains(entry, tt.want) {
+					t.Errorf("Compose.GetServiceNames() = %v, want %v", got, tt.want)
+				}
 			}
 		})
 	}

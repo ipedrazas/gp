@@ -67,3 +67,20 @@ func TestComposeTarget(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildxWithBake(t *testing.T) {
+	res := []string{"docker", "buildx", "bake", "-f", "docker-bake.hcl", "--push"}
+	tests := []struct {
+		name string
+		want []string
+	}{
+		{name: "t01", want: res},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := BuildxWithBake(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("BuildxWithBake() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

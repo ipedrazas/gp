@@ -34,7 +34,7 @@ import (
 var (
 	registryUser string
 	registry     string
-	dns          string
+	domain       string
 	directory    string
 	defaultsURL  string
 )
@@ -65,8 +65,12 @@ var initCmd = &cobra.Command{
 		if err != nil {
 			fmt.Println(err)
 		}
+
 		v := viper.GetViper()
 		v.SetDefault("defaultsUrl", defaultsURL)
+		v.SetDefault("registry", registry)
+		v.SetDefault("registry_user", registryUser)
+		v.SetDefault("domain", domain)
 
 		err = v.WriteConfig()
 		if err != nil {
@@ -88,9 +92,9 @@ func init() {
 	// is called directly, e.g.:
 	// initCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	initCmd.Flags().StringVar(&defaultsURL, "defaults", "https://github.com/ipedrazas/defaults.git", "Git repo for the Defaults.")
-	initCmd.Flags().StringVarP(&directory, "dir", "d", path.AppConfig(), "directory to store defaults")
+	initCmd.Flags().StringVar(&directory, "dir", path.AppConfig(), "directory to store defaults")
 	initCmd.Flags().StringVarP(&registryUser, "user", "u", "", "User to access the registry")
-	initCmd.Flags().StringVarP(&registry, "registry", "r", "docker.io", "Flag to specify the Docker registry to use.")
-	initCmd.Flags().StringVar(&dns, "dns", ".home.local", "Default subdomain for dns and ingress.")
+	initCmd.Flags().StringVarP(&registry, "registry", "r", "", "Flag to specify the Docker registry to use.")
+	initCmd.Flags().StringVarP(&domain, "domain", "d", "", "Default subdomain for dns and ingress.")
 
 }

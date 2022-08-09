@@ -5,6 +5,20 @@ import (
 	"time"
 )
 
+func BuildxWithBake() []string {
+	// docker buildx bake -f docker-bake.hcl image-all --push
+	command := []string{
+		"docker",
+		"buildx",
+		"bake",
+		"-f",
+		"docker-bake.hcl",
+		"--push",
+	}
+
+	return command
+}
+
 func Buildx(platform, tag, shaGit, version string, push bool) []string {
 
 	command := []string{

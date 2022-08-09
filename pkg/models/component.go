@@ -2,7 +2,7 @@ package models
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/ipedrazas/gp/pkg/files"
@@ -28,12 +28,13 @@ type Component struct {
 
 func (c *Component) GenerateDockerfile() error {
 
-	fmt.Println("Generating Dockerfile", path.CurrentDir()+"/Dockerfile")
-	if c.Overwrite || !path.Exists(path.CurrentDir()+"/Dockerfile") {
+	if !path.Exists(path.CurrentDir() + "/Dockerfile") {
+		fmt.Println("Generating Dockerfile", path.CurrentDir()+"/Dockerfile")
 		if strings.ToLower(c.Lang) == "go" {
 			tpl := path.Dockerfiles() + "go/go.Dockerfile"
 			err := c.writeDockerfile(tpl)
 			if err != nil {
+				fmt.Println("Error Generating Dockerfile", path.CurrentDir()+"/Dockerfile")
 				return err
 			}
 		}
@@ -64,23 +65,26 @@ func (c *Component) GenerateDockerfile() error {
 func (c *Component) writeDockerfile(tpl string) error {
 
 	dst := path.CurrentDir() + "/Dockerfile"
-	content, err := ioutil.ReadFile(tpl)
+	content, err := os.ReadFile(tpl)
 	if err != nil {
 		fmt.Println(err, tpl)
 		return err
 	}
-
-	text := string(content)
-	text = strings.Replace(text, "__NAME__", c.Slug, -1)
-	text = strings.Replace(text, "__GIT_REPO__", c.Src, -1)
-	text = strings.Replace(text, "__ENTRYPOINT__", parseCMD(c.Cmd), -1)
-
-	err = ioutil.WriteFile(dst, []byte(text), 0644)
+	text := c.RenderTemplate(content)
+	err = os.WriteFile(dst, []byte(text), 0644)
 	if err != nil {
 		fmt.Println(err, tpl, dst)
 		return err
 	}
 	return nil
+}
+
+func (c *Component) RenderTemplate(content []byte) string {
+	text := string(content)
+	text = strings.Replace(text, "__NAME__", c.Slug, -1)
+	text = strings.Replace(text, "__GIT_REPO__", c.Src, -1)
+	text = strings.Replace(text, "__ENTRYPOINT__", parseCMD(c.Cmd), -1)
+	return text
 }
 
 func parseCMD(cmd string) string {
@@ -132,11 +136,13 @@ func (c *Component) Hydrate(v *viper.Viper) error {
 
 		c.Targets = append(c.Targets, *t)
 	}
-	if c.Cmd == "" {
-		c.Cmd = c.Name
-	}
 	if c.Slug == "" {
 		c.Slug = c.Name
 	}
+
+	if c.Cmd == "" {
+		c.Cmd = c.Slug
+	}
+
 	return nil
 }

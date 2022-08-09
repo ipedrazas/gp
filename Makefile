@@ -1,7 +1,7 @@
 
 
-.PHONY: clear
-clear: ## Clear the working area and the project
+.PHONY: cleanup
+cleanup: ## Clear the working area and the project
 	rm -rf ${HOME}/.config/gp
 	rm ./gp
 

@@ -23,22 +23,19 @@ package files
 
 import (
 	"fmt"
-	"io/ioutil"
-	"log"
 	"os"
 
-	"github.com/pelletier/go-toml/v2"
 	"gopkg.in/yaml.v2"
 )
 
 func SaveAsYaml(path string, out interface{}) error {
 	d, err := yaml.Marshal(&out)
 	if err != nil {
-		log.Fatalf("error: %v", err)
+		return err
 	}
-	err = ioutil.WriteFile(path, d, 0664)
+	err = os.WriteFile(path, d, 0664)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	return nil
 }
@@ -54,25 +51,24 @@ func Load(configFile string, out interface{}) error {
 	return nil
 }
 
-func LoadTOML(configFile string, out interface{}) error {
-	data, err := os.ReadFile(configFile)
-	if err != nil {
-		return fmt.Errorf("unable to load configuration file: %w", err)
-	}
-	if err := toml.Unmarshal(data, out); err != nil {
-		return fmt.Errorf("unable to parse configuration file: %w", err)
-	}
-	return nil
-}
+// func LoadTOML(configFile string, out interface{}) error {
+// 	data, err := os.ReadFile(configFile)
+// 	if err != nil {
+// 		return fmt.Errorf("unable to load configuration file: %w", err)
+// 	}
+// 	if err := toml.Unmarshal(data, out); err != nil {
+// 		return fmt.Errorf("unable to parse configuration file: %w", err)
+// 	}
+// 	return nil
+// }
 
 func Copy(source string, target string) error {
-	bytesRead, err := ioutil.ReadFile(source)
+	bytesRead, err := os.ReadFile(source)
 
 	if err != nil {
 		return err
 	}
-
-	err = ioutil.WriteFile(target, bytesRead, 0644)
+	err = os.WriteFile(target, bytesRead, 0644)
 
 	if err != nil {
 		return err
