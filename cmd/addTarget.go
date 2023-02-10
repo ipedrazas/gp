@@ -68,9 +68,7 @@ var addCmd = &cobra.Command{
 		c := &models.Component{}
 
 		v := viper.GetViper()
-		fmt.Println(domain)
-		fmt.Println(v.IsSet("domain"))
-		fmt.Println(v.GetString("domain"))
+
 		if domain == "" && v.IsSet("domain") {
 			dt.Domain = v.GetString("domain")
 		}
@@ -80,10 +78,6 @@ var addCmd = &cobra.Command{
 		if registry == "" && v.IsSet("registry") {
 			dt.Registry = v.GetString("registry")
 		}
-
-		fmt.Println(dt)
-		fmt.Println(dt.IsAvailable())
-		fmt.Println(dt.InDefaults(fromDefault))
 
 		err = c.Hydrate(v)
 		if err != nil {
@@ -97,7 +91,14 @@ var addCmd = &cobra.Command{
 					cobra.CheckErr(err)
 				}
 				dt.Save()
-				writeCompose(dt, c)
+				err = parseTemplate(dt, c, dt.Compose)
+				if err != nil {
+					fmt.Println(err)
+				}
+				err = parseTemplate(dt, c, "target-"+dt.Name+".Dockerfile")
+				if err != nil {
+					fmt.Println(err)
+				}
 			} else {
 				cobra.CheckErr(errors.New("target already exists in " + path.Targets() + dt.Name))
 			}
@@ -121,10 +122,10 @@ func init() {
 
 }
 
-func writeCompose(t *models.Target, c *models.Component) error {
+func parseTemplate(t *models.Target, c *models.Component, filename string) error {
 
-	tpl := path.DefaultTargets() + fromDefault + "/" + t.Compose
-	dst := path.Targets() + t.Name + "/" + t.Compose
+	tpl := path.DefaultTargets() + fromDefault + "/" + filename
+	dst := path.Targets() + t.Name + "/" + filename
 	content, err := os.ReadFile(tpl)
 	if err != nil {
 		fmt.Println(err, tpl)

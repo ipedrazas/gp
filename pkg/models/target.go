@@ -16,7 +16,7 @@ import (
 type Target struct {
 	Name           string
 	Platform       []string
-	Domain         string `yaml:"dns,omitempty"`
+	Domain         string `yaml:"domain,omitempty"`
 	Overwrite      bool   `yaml:",omitempty"`
 	Registry       string `yaml:",omitempty"`
 	RegistryUserId string `yaml:"registry_user,omitempty"`
