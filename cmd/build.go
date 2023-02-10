@@ -43,6 +43,7 @@ var buildCmd = &cobra.Command{
 		if err != nil {
 			cobra.CheckErr(err)
 		}
+		// TODO: Replace this with Dockerfile generation
 		err = c.GenerateDockerfile()
 		if err != nil {
 			cobra.CheckErr(err)

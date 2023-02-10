@@ -1,6 +1,7 @@
 package models
 
 import (
+	"os"
 	"testing"
 )
 
@@ -163,6 +164,83 @@ func Test_validateActions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := validateActions(tt.args.actions, tt.args.services); got != tt.want {
 				t.Errorf("validateActions() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTarget_Run(t *testing.T) {
+	type fields struct {
+		Name           string
+		Platform       []string
+		Domain         string
+		Overwrite      bool
+		Registry       string
+		RegistryUserId string
+		Image          string
+		Compose        string
+		Actions        []string
+		DockerBuild    bool
+		Paused         bool
+	}
+	type args struct {
+		comp   *Component
+		gitSha string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		// test paused
+		{name: "t01", fields: fields{Name: "test", Paused: true}, args: args{}, wantErr: false},
+		// test no docker build no compose
+		{name: "t02", fields: fields{Name: "test", DockerBuild: false}, args: args{}, wantErr: false},
+		// test no docker build no compose
+		{name: "t03", fields: fields{Name: "test", DockerBuild: false, Compose: "nofile.yaml"}, args: args{}, wantErr: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tr := &Target{
+				Name:           tt.fields.Name,
+				Platform:       tt.fields.Platform,
+				Domain:         tt.fields.Domain,
+				Overwrite:      tt.fields.Overwrite,
+				Registry:       tt.fields.Registry,
+				RegistryUserId: tt.fields.RegistryUserId,
+				Image:          tt.fields.Image,
+				Compose:        tt.fields.Compose,
+				Actions:        tt.fields.Actions,
+				DockerBuild:    tt.fields.DockerBuild,
+				Paused:         tt.fields.Paused,
+			}
+			if err := tr.Run(tt.args.comp, tt.args.gitSha); (err != nil) != tt.wantErr {
+				t.Errorf("Target.Run() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_setEnvVars(t *testing.T) {
+	version := "123"
+	git := "abc"
+	type args struct {
+		version string
+		gitSha  string
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{name: "t01", args: args{version: version, gitSha: git}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setEnvVars(tt.args.version, tt.args.gitSha)
+			vversion := os.Getenv("TAG")
+			if version != vversion {
+				t.Errorf("Target.setEnvVars() expected %v got %v", version, vversion)
 			}
 		})
 	}

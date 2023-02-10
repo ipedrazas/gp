@@ -71,10 +71,10 @@ func (t *Target) Run(comp *Component, gitSha string) error {
 	}
 
 	if t.DockerBuild {
-		// v := viper.GetViper()
 		dockerBin := path.GetBinPath("docker")
 		plat := strings.Join(t.Platform, ",")
-		// for _, plat := range t.Platform {
+
+		// Do we need this?
 		t.SetDockerImage(comp.Slug, comp.Version)
 
 		var dockerBuildCMD []string
@@ -84,22 +84,23 @@ func (t *Target) Run(comp *Component, gitSha string) error {
 			dockerBuildCMD = cmd.Buildx(plat, t.Image, gitSha, comp.Version, true)
 		}
 		setEnvVars(comp.Version, gitSha)
-		fmt.Println(dockerBuildCMD)
 		_, err := shell.Execute(dockerBin, dockerBuildCMD)
 		if err != nil {
 			fmt.Println(err)
 			return err
 		}
 	}
-
-	return t.ExecuteTargetCompose()
+	if t.Compose != "" {
+		return t.ExecuteTargetCompose()
+	}
+	return nil
 
 }
 
 func setEnvVars(version, gitSha string) {
 	now := time.Now().UTC().Format(time.UnixDate)
 	os.Setenv("TAG", version)
-	os.Setenv("GITHUB_REF", gitSha)
+	os.Setenv("GIT_REF", gitSha)
 	os.Setenv("BUILD_DATE", now)
 }
 

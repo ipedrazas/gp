@@ -52,6 +52,13 @@ func (c *Component) GenerateDockerfile() error {
 				return err
 			}
 		}
+		if strings.ToLower(c.Lang) == "node" {
+			tpl := path.Dockerfiles() + "node/node.Dockerfile"
+			err := c.writeDockerfile(tpl)
+			if err != nil {
+				return err
+			}
+		}
 
 		err := files.Copy(path.Dockerfiles()+"dockerignore", path.CurrentDir()+"/.dockerignore")
 		if err != nil {
