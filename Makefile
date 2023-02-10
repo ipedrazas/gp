@@ -17,7 +17,7 @@ build:
 	go build -o ./dist/d2 -ldflags="-X github.com/ipedrazas/gp/cmd.Version=`git describe --tags --always --abbrev=0 --match='v[0-9]*.[0-9]*.[0-9]*'` -X github.com/ipedrazas/gp/cmd.CommitHash=`git rev-parse --short HEAD` -X github.com/ipedrazas/gp/cmd.BuildTimestamp=`date '+%Y-%m-%dT%H:%M:%S'`"
 	
 .PHONY: install
-install:
+install: build
 	rm ~/go/bin/d2
 	cp ./dist/d2 ~/go/bin/d2
 
