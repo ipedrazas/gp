@@ -91,14 +91,28 @@ var addCmd = &cobra.Command{
 					cobra.CheckErr(err)
 				}
 				dt.Save()
-				err = parseTemplate(dt, c, dt.Compose)
+				files, err := os.ReadDir(path.DefaultTargets() + fromDefault)
 				if err != nil {
-					fmt.Println(err)
+					cobra.CheckErr(err)
 				}
-				err = parseTemplate(dt, c, "target-"+dt.Name+".Dockerfile")
-				if err != nil {
-					fmt.Println(err)
+
+				for _, file := range files {
+					// fmt.Println(file.Name())
+					if !file.IsDir() {
+						err = parseTemplate(dt, c, file.Name())
+						if err != nil {
+							fmt.Println(err)
+						}
+					}
 				}
+				// err = parseTemplate(dt, c, dt.Compose)
+				// if err != nil {
+				// 	fmt.Println(err)
+				// }
+				// err = parseTemplate(dt, c, "target-"+dt.Name+".Dockerfile")
+				// if err != nil {
+				// 	fmt.Println(err)
+				// }
 			} else {
 				cobra.CheckErr(errors.New("target already exists in " + path.Targets() + dt.Name))
 			}

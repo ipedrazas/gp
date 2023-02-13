@@ -23,7 +23,9 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/ipedrazas/gp/pkg/models"
 	"github.com/ipedrazas/gp/pkg/path"
 	"github.com/ipedrazas/gp/pkg/shell"
 	"github.com/spf13/cobra"
@@ -34,7 +36,7 @@ var (
 	app      string
 	username string
 	appName  string
-	apps     []App
+	apps     []models.App
 )
 
 // appCmd represents the app command
@@ -50,17 +52,18 @@ to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("app called")
 		initApps()
-		for _, app := range apps {
-			fmt.Println(app.toDockerRun())
-			if app.Name == "cobra" {
+		for _, a := range apps {
+			fmt.Println(a.DockerRun())
+			fmt.Println(a.Name + " " + appName)
+			if a.Name == app {
 				dockerBin := path.GetBinPath("docker")
-				_, err := shell.Execute(dockerBin, app.toCMD())
+				_, err := shell.Execute(dockerBin, a.CMD())
 				if err != nil {
 					cobra.CheckErr(err)
 				}
+				break
 			}
 		}
-
 	},
 }
 
@@ -71,17 +74,8 @@ func init() {
 	appCmd.Flags().StringVarP(&appName, "appName", "n", "go", "new app name")
 }
 
-type App struct {
-	Name    string
-	Image   string
-	CMD     []string
-	ENVVARS []string
-	Volume  string
-}
-
 func initApps() {
 
-	// docker run --rm -e USER="Ivan Pedrazas ipedrazas@gmail.com" -e NAME="testabc" -v $(pwd):/workspace
 	v := viper.GetViper()
 	if v.IsSet("name") {
 		username = v.GetString("name")
@@ -90,34 +84,28 @@ func initApps() {
 		}
 	}
 
-	envs := []string{"USER=" + username, "NAME=" + appName}
-	app := &App{
+	envs := []string{"USER=" + username, "NAME=" + appName, "SLUG=" + Slugify(appName)}
+	app := &models.App{
 		Name:    "cobra",
 		Image:   "harbor.alacasa.uk/library/gotools:cobra",
-		ENVVARS: envs,
+		EnvVars: envs,
 		Volume:  "/workspace",
 	}
 	apps = append(apps, *app)
+	app2 := &models.App{
+		Name:    "gin",
+		Image:   "harbor.alacasa.uk/library/gotools:gin",
+		EnvVars: envs,
+		Volume:  "/workspace",
+	}
+	apps = append(apps, *app2)
 }
 
-func (app *App) toDockerRun() string {
-	cmd := "docker run --rm "
-	for _, env := range app.ENVVARS {
-		cmd += fmt.Sprintf("-e %s ", env)
-	}
-	currentDir := path.CurrentDir()
-	cmd += fmt.Sprintf("-v %s:%s ", currentDir, app.Volume)
-	cmd += app.Image
-	return cmd
-}
+func Slugify(s string) string {
 
-func (app *App) toCMD() []string {
-	cmd := []string{"docker", "run", "--rm"}
-	for _, env := range app.ENVVARS {
-		cmd = append(cmd, "-e", env)
-	}
-	currentDir := path.CurrentDir()
-	cmd = append(cmd, "-v", currentDir+":"+app.Volume)
-	cmd = append(cmd, app.Image)
-	return cmd
+	ss := strings.Split(s, "/")
+	s = ss[len(ss)-1]
+	s = strings.Replace(strings.ToLower(s), " ", "-", -1)
+	return strings.ToLower(s)
+
 }
