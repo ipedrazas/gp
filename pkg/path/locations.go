@@ -88,7 +88,6 @@ func Kubeconfig() string {
 	return getHome() + "/.kube/config"
 }
 
-// Targets returns  "$HOME/.config/gp/targets/"
 func Targets() string {
 	if Exists(AppRoot() + "targets/") {
 		return AppRoot() + "targets/"
@@ -108,6 +107,7 @@ func Exists(path string) bool {
 }
 
 // DefaultTargets returns the location of the targets defined in the Defaults repo
+// "$HOME/.config/gp/targets/"
 func DefaultTargets() string {
 	return Defaults() + "targets/"
 }

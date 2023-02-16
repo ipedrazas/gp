@@ -22,7 +22,7 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"fmt"
+	// "fmt"
 	"strings"
 
 	"github.com/ipedrazas/gp/pkg/models"
@@ -50,11 +50,11 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("app called")
+		// fmt.Println("app called")
 		initApps()
 		for _, a := range apps {
-			fmt.Println(a.DockerRun())
-			fmt.Println(a.Name + " " + appName)
+			// fmt.Println(a.DockerRun())
+			// fmt.Println(a.Name + " " + appName)
 			if a.Name == app {
 				dockerBin := path.GetBinPath("docker")
 				_, err := shell.Execute(dockerBin, a.CMD())
@@ -64,6 +64,8 @@ to quickly create a Cobra application.`,
 				break
 			}
 		}
+		addCmd.Flags().Set("name", "local")
+		addCmd.Run(cmd, []string{})
 	},
 }
 

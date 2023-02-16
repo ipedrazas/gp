@@ -54,8 +54,16 @@ var addCmd = &cobra.Command{
 	gp target add -n [New Target Name] -f [Target Name defined in Defaults] -p [KEY=Value1,KEY2=value2]
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(args)
 		dt := &models.Target{}
+
+		if fromDefault == "" {
+			fromDefault = name
+		}
 		fileName := path.DefaultTargets() + fromDefault + "/target.yaml"
+
+		fmt.Println(fileName)
+
 		err := files.Load(fileName, dt)
 		if err != nil {
 			cobra.CheckErr(err)
@@ -64,8 +72,6 @@ var addCmd = &cobra.Command{
 		dt.Domain = domain
 		dt.Registry = registry
 		dt.RegistryUserId = registryUser
-
-		c := &models.Component{}
 
 		v := viper.GetViper()
 
@@ -79,6 +85,7 @@ var addCmd = &cobra.Command{
 			dt.Registry = v.GetString("registry")
 		}
 
+		c := &models.Component{}
 		err = c.Hydrate(v)
 		if err != nil {
 			cobra.CheckErr(err)
@@ -86,33 +93,24 @@ var addCmd = &cobra.Command{
 
 		if dt.InDefaults(fromDefault) {
 			if dt.IsAvailable() {
-				err := path.MakeDirectoryIfNotExists(path.AppRoot() + "targets/")
+
+				err = dt.Save()
 				if err != nil {
-					cobra.CheckErr(err)
+					fmt.Println(err)
 				}
-				dt.Save()
 				files, err := os.ReadDir(path.DefaultTargets() + fromDefault)
 				if err != nil {
 					cobra.CheckErr(err)
 				}
-
 				for _, file := range files {
-					// fmt.Println(file.Name())
-					if !file.IsDir() {
+					if !file.IsDir() && file.Name() != "target.yaml" {
 						err = parseTemplate(dt, c, file.Name())
 						if err != nil {
 							fmt.Println(err)
 						}
 					}
 				}
-				// err = parseTemplate(dt, c, dt.Compose)
-				// if err != nil {
-				// 	fmt.Println(err)
-				// }
-				// err = parseTemplate(dt, c, "target-"+dt.Name+".Dockerfile")
-				// if err != nil {
-				// 	fmt.Println(err)
-				// }
+
 			} else {
 				cobra.CheckErr(errors.New("target already exists in " + path.Targets() + dt.Name))
 			}
@@ -139,10 +137,11 @@ func init() {
 func parseTemplate(t *models.Target, c *models.Component, filename string) error {
 
 	tpl := path.DefaultTargets() + fromDefault + "/" + filename
-	dst := path.Targets() + t.Name + "/" + filename
+	// dst := path.Targets() + t.Name + "/" + filename
+	dst := "gp/targets/" + t.Name + "/" + filename
 	content, err := os.ReadFile(tpl)
 	if err != nil {
-		fmt.Println(err, tpl)
+		// fmt.Println(tpl, dst)
 		return err
 	}
 
@@ -154,10 +153,10 @@ func parseTemplate(t *models.Target, c *models.Component, filename string) error
 	text = strings.Replace(text, "__DATA__", data, -1)
 	text = strings.Replace(text, "__NAME__", c.Slug, -1)
 
-	err = os.WriteFile(dst, []byte(text), 0644)
-	if err != nil {
-		fmt.Println(err, tpl, dst)
-		return err
+	content = []byte(text)
+	err2 := os.WriteFile(dst, content, 0666)
+	if err2 != nil {
+		return err2
 	}
 	return nil
 }

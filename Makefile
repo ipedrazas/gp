@@ -3,7 +3,8 @@
 .PHONY: cleanup
 cleanup: ## Clear the working area and the project
 	rm -rf ${HOME}/.config/gp
-	rm ./gp
+	rm -rf ./gp
+	rm -rf ./dist
 
 
 .PHONY: test
@@ -18,6 +19,6 @@ build:
 	
 .PHONY: install
 install: build
-	rm ~/go/bin/d2
-	cp ./dist/d2 ~/go/bin/d2
+	rm ${GOPATH}/bin/d2
+	cp ./dist/d2 ${GOPATH}/bin/d2
 

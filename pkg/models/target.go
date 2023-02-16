@@ -44,12 +44,19 @@ func (target *Target) SetDockerImage(appName string, tag string) {
 	}
 }
 
-func (t *Target) Save() {
+func (t *Target) Save() error {
 
-	targetDir := path.Targets() + t.Name
-
-	path.MakeDirectoryIfNotExists(targetDir)
-	files.SaveAsYaml(targetDir+"/target.yaml", t)
+	targetDir := path.AppRoot() + "targets/" + t.Name
+	fmt.Println(targetDir)
+	err := path.MakeDirectoryIfNotExists(targetDir)
+	if err != nil {
+		return err
+	}
+	err = files.SaveAsYaml(targetDir+"/target.yaml", t)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (t *Target) IsAvailable() bool {
@@ -84,6 +91,7 @@ func (t *Target) Run(comp *Component, gitSha string) error {
 			dockerBuildCMD = cmd.Buildx(plat, t.Image, gitSha, comp.Version, true)
 		}
 		setEnvVars(comp.Version, gitSha)
+		fmt.Println(strings.Join(dockerBuildCMD, " "))
 		_, err := shell.Execute(dockerBin, dockerBuildCMD)
 		if err != nil {
 			fmt.Println(err)
