@@ -33,6 +33,7 @@ import (
 var (
 	cfgFile string
 	// targetname string
+	build bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -72,6 +73,7 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.PersistentFlags().BoolVar(&build, "build", false, "path where target resources are located.")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -91,8 +93,8 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		fmt.Println("Config file not found... initializing")
+		// os.Exit(1)
 	}
 
 	path.MakeDirectoryIfNotExists(path.AppConfig())

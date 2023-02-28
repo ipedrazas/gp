@@ -30,6 +30,7 @@ import (
 	"github.com/ipedrazas/gp/pkg/files"
 	"github.com/ipedrazas/gp/pkg/models"
 	"github.com/ipedrazas/gp/pkg/path"
+	"github.com/ipedrazas/gp/pkg/remote"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -40,6 +41,10 @@ var (
 	params      string
 	data        string
 	fromDefault string
+	oci         string
+	url         string
+	targetPath  string
+	// build       bool
 )
 
 // addCmd represents the add command
@@ -54,68 +59,13 @@ var addCmd = &cobra.Command{
 	gp target add -n [New Target Name] -f [Target Name defined in Defaults] -p [KEY=Value1,KEY2=value2]
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(args)
-		dt := &models.Target{}
-
-		if fromDefault == "" {
-			fromDefault = name
+		if oci != "" {
+			remote.FetchOCI(oci, "gp/targets/"+name+"/")
+			return
 		}
-		fileName := path.DefaultTargets() + fromDefault + "/target.yaml"
-
-		fmt.Println(fileName)
-
-		err := files.Load(fileName, dt)
-		if err != nil {
-			cobra.CheckErr(err)
-		}
-		dt.Name = name
-		dt.Domain = domain
-		dt.Registry = registry
-		dt.RegistryUserId = registryUser
-
-		v := viper.GetViper()
-
-		if domain == "" && v.IsSet("domain") {
-			dt.Domain = v.GetString("domain")
-		}
-		if registryUser == "" && v.IsSet("registry_user") {
-			dt.RegistryUserId = v.GetString("registry_user")
-		}
-		if registry == "" && v.IsSet("registry") {
-			dt.Registry = v.GetString("registry")
-		}
-
-		c := &models.Component{}
-		err = c.Hydrate(v)
-		if err != nil {
-			cobra.CheckErr(err)
-		}
-
-		if dt.InDefaults(fromDefault) {
-			if dt.IsAvailable() {
-
-				err = dt.Save()
-				if err != nil {
-					fmt.Println(err)
-				}
-				files, err := os.ReadDir(path.DefaultTargets() + fromDefault)
-				if err != nil {
-					cobra.CheckErr(err)
-				}
-				for _, file := range files {
-					if !file.IsDir() && file.Name() != "target.yaml" {
-						err = parseTemplate(dt, c, file.Name())
-						if err != nil {
-							fmt.Println(err)
-						}
-					}
-				}
-
-			} else {
-				cobra.CheckErr(errors.New("target already exists in " + path.Targets() + dt.Name))
-			}
-		} else {
-			cobra.CheckErr(errors.New("target not found in Defaults directory"))
+		fromFilesystem()
+		if build {
+			buildCmd.Run(cmd, []string{})
 		}
 	},
 }
@@ -131,7 +81,80 @@ func init() {
 	addCmd.Flags().StringVarP(&domain, "domain", "d", "", "partial dns for public access to resources: .mycontext.mydomain.com ")
 	addCmd.Flags().StringVarP(&registryUser, "user", "u", "", "User to access the registry")
 	addCmd.Flags().StringVarP(&registry, "registry", "r", "", "Flag to specify the Docker registry to use.")
+	addCmd.Flags().StringVarP(&oci, "oci", "o", "", "OCI image that contains the Target.")
+	addCmd.Flags().StringVar(&url, "url", "", "URL to fetch the Target from.")
+	addCmd.Flags().StringVar(&targetPath, "path", "", "path where target resources are located.")
 
+}
+
+func TargetFromFile(filepath string) *models.Target {
+	dt := &models.Target{}
+
+	err := files.Load(filepath, dt)
+	if err != nil {
+		cobra.CheckErr(err)
+	}
+	dt.Name = name
+	dt.Domain = domain
+	dt.Registry = registry
+	dt.RegistryUserId = registryUser
+
+	v := viper.GetViper()
+
+	if domain == "" && v.IsSet("domain") {
+		dt.Domain = v.GetString("domain")
+	}
+	if registryUser == "" && v.IsSet("registry_user") {
+		dt.RegistryUserId = v.GetString("registry_user")
+	}
+	if registry == "" && v.IsSet("registry") {
+		dt.Registry = v.GetString("registry")
+	}
+
+	return dt
+}
+
+func fromFilesystem() {
+
+	if fromDefault == "" {
+		fromDefault = name
+	}
+	fileName := path.DefaultTargets() + fromDefault + "/target.yaml"
+
+	dt := TargetFromFile(fileName)
+
+	if dt.InDefaults(fromDefault) {
+		if dt.IsAvailable() {
+
+			err := dt.Save()
+			if err != nil {
+				fmt.Println(err)
+			}
+			files, err := os.ReadDir(path.DefaultTargets() + fromDefault)
+			if err != nil {
+				cobra.CheckErr(err)
+			}
+			c := &models.Component{}
+			v := viper.GetViper()
+			err2 := c.Hydrate(v, false)
+			if err2 != nil {
+				cobra.CheckErr(err2)
+			}
+			for _, file := range files {
+				if !file.IsDir() && file.Name() != "target.yaml" {
+					err = parseTemplate(dt, c, file.Name())
+					if err != nil {
+						fmt.Println(err)
+					}
+				}
+			}
+
+		} else {
+			cobra.CheckErr(errors.New("target already exists in " + path.Targets() + dt.Name))
+		}
+	} else {
+		cobra.CheckErr(errors.New("target not found in Defaults directory"))
+	}
 }
 
 func parseTemplate(t *models.Target, c *models.Component, filename string) error {

@@ -115,7 +115,7 @@ func parseCMD(cmd string) string {
 	return res
 }
 
-func (c *Component) Hydrate(v *viper.Viper) error {
+func (c *Component) Hydrate(v *viper.Viper, withTargets bool) error {
 
 	files.Load(path.AppFile(), c)
 	err := path.MakeDirectoryIfNotExists(path.AppRoot())
@@ -123,32 +123,34 @@ func (c *Component) Hydrate(v *viper.Viper) error {
 		fmt.Println("failed loading the app file")
 		return err
 	}
-
-	targetDirs := path.GetDirNames(path.Targets())
-	c.Targets = []Target{}
-	for _, target := range targetDirs {
-		t := &Target{}
-		fileName := path.Targets() + target + "/target.yaml"
-		err = files.Load(fileName, t)
-		if err != nil {
-			fmt.Printf("Warn: target %s cannot be read\n\n", fileName)
-			continue
-		}
-		if t.Registry == "" {
-			t.Registry = v.GetString("docker.registry")
-		}
-		if t.RegistryUserId == "" {
-			t.RegistryUserId = v.GetString("docker.user")
-		}
-
-		c.Targets = append(c.Targets, *t)
-	}
 	if c.Slug == "" {
 		c.Slug = c.Name
 	}
 
 	if c.Cmd == "" {
 		c.Cmd = c.Slug
+	}
+
+	if withTargets {
+		targetDirs := path.GetDirNames(path.Targets())
+		c.Targets = []Target{}
+		for _, target := range targetDirs {
+			t := &Target{}
+			fileName := path.Targets() + target + "/target.yaml"
+			err = files.Load(fileName, t)
+			if err != nil {
+				fmt.Printf("Warn: target %s cannot be read\n\n", fileName)
+				continue
+			}
+			if t.Registry == "" {
+				t.Registry = v.GetString("docker.registry")
+			}
+			if t.RegistryUserId == "" {
+				t.RegistryUserId = v.GetString("docker.user")
+			}
+
+			c.Targets = append(c.Targets, *t)
+		}
 	}
 
 	return nil

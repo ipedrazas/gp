@@ -39,7 +39,7 @@ var buildCmd = &cobra.Command{
 	Example: `  gp build `,
 	Run: func(cmd *cobra.Command, args []string) {
 		c := &models.Component{}
-		err := c.Hydrate(viper.GetViper())
+		err := c.Hydrate(viper.GetViper(), true)
 		if err != nil {
 			cobra.CheckErr(err)
 		}

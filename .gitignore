@@ -17,3 +17,4 @@ gp
 cover.*
 dist/
 .vscode
+tmp/

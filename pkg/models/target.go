@@ -11,6 +11,8 @@ import (
 	"github.com/ipedrazas/gp/pkg/files"
 	"github.com/ipedrazas/gp/pkg/path"
 	"github.com/ipedrazas/gp/pkg/shell"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 type Target struct {
@@ -31,6 +33,7 @@ type Target struct {
 	Actions     []string `yaml:"actions,omitempty"`
 	DockerBuild bool     `yaml:"docker_build"`
 	Paused      bool     `yaml:"paused,omitempty"`
+	Origin      string   `yaml:"origin,omitempty"`
 }
 
 func (target *Target) SetDockerImage(appName string, tag string) {
@@ -47,7 +50,6 @@ func (target *Target) SetDockerImage(appName string, tag string) {
 func (t *Target) Save() error {
 
 	targetDir := path.AppRoot() + "targets/" + t.Name
-	fmt.Println(targetDir)
 	err := path.MakeDirectoryIfNotExists(targetDir)
 	if err != nil {
 		return err
@@ -55,6 +57,24 @@ func (t *Target) Save() error {
 	err = files.SaveAsYaml(targetDir+"/target.yaml", t)
 	if err != nil {
 		return err
+	}
+	files, err := os.ReadDir(targetDir)
+	if err != nil {
+		cobra.CheckErr(err)
+	}
+	c := &Component{}
+	v := viper.GetViper()
+	err2 := c.Hydrate(v, false)
+	if err2 != nil {
+		cobra.CheckErr(err2)
+	}
+	for _, file := range files {
+		if !file.IsDir() && file.Name() != "target.yaml" {
+			err = t.parseTemplate(c, file.Name())
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
 	}
 	return nil
 }
@@ -171,4 +191,26 @@ func contains(elem string, target []string) bool {
 		}
 	}
 	return false
+}
+
+func (t *Target) parseTemplate(c *Component, filename string) error {
+	content, err := os.ReadFile(filename)
+	if err != nil {
+		// fmt.Println(tpl, dst)
+		return err
+	}
+
+	text := string(content)
+
+	text = strings.Replace(text, "__TARGET_NAME__", t.Name, -1)
+	text = strings.Replace(text, "__WORKSPACE__", path.CurrentDir(), -1)
+	text = strings.Replace(text, "__GP_ROOT_CONFIG__/", path.AppConfig(), -1)
+	text = strings.Replace(text, "__NAME__", c.Slug, -1)
+
+	content = []byte(text)
+	err2 := os.WriteFile(filename, content, 0666)
+	if err2 != nil {
+		return err2
+	}
+	return nil
 }

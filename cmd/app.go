@@ -65,7 +65,12 @@ to quickly create a Cobra application.`,
 			}
 		}
 		addCmd.Flags().Set("name", "local")
+		// addCmd.Flags().Set("", "--build")
 		addCmd.Run(cmd, []string{})
+		if build {
+			buildCmd.Run(cmd, []string{})
+		}
+		// addCmd.Run(cmd, []string{})
 	},
 }
 
